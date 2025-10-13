@@ -414,6 +414,149 @@ $login_time = $_SESSION['login_time'] ?? '';
         </section>
     </aside>
 
+    <!-- Tambahkan di dashboard.php sebelum footer -->
+<section id="admin-crud" style="margin: 60px 0; background: rgba(255,255,255,0.05); padding: 30px; border-radius: 15px;">
+    <h2>📊 Admin Panel - Kelola Produk</h2>
+    
+    <?php
+    // Include koneksi database
+    include 'koneksi.php';
+    
+    // Proses CRUD
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if (isset($_POST['add_product'])) {
+            // Tambah produk
+            $game_name = $conn->real_escape_string($_POST['game_name']);
+            $item_name = $conn->real_escape_string($_POST['item_name']);
+            $price = $conn->real_escape_string($_POST['price']);
+            
+            $sql = "INSERT INTO products (game_name, item_name, price) VALUES ('$game_name', '$item_name', '$price')";
+            if ($conn->query($sql)) {
+                echo "<div class='notification success' style='background: rgba(78,205,196,0.3); padding: 10px; border-radius: 5px; margin: 10px 0;'>Produk berhasil ditambahkan!</div>";
+            } else {
+                echo "<div class='notification error' style='background: rgba(255,107,107,0.3); padding: 10px; border-radius: 5px; margin: 10px 0;'>Error: " . $conn->error . "</div>";
+            }
+        }
+        
+        if (isset($_POST['update_product'])) {
+            // Update produk
+            $id = $conn->real_escape_string($_POST['product_id']);
+            $game_name = $conn->real_escape_string($_POST['game_name']);
+            $item_name = $conn->real_escape_string($_POST['item_name']);
+            $price = $conn->real_escape_string($_POST['price']);
+            
+            $sql = "UPDATE products SET game_name='$game_name', item_name='$item_name', price='$price' WHERE id='$id'";
+            if ($conn->query($sql)) {
+                echo "<div class='notification success' style='background: rgba(78,205,196,0.3); padding: 10px; border-radius: 5px; margin: 10px 0;'>Produk berhasil diupdate!</div>";
+            } else {
+                echo "<div class='notification error' style='background: rgba(255,107,107,0.3); padding: 10px; border-radius: 5px; margin: 10px 0;'>Error: " . $conn->error . "</div>";
+            }
+        }
+        
+        if (isset($_POST['delete_product'])) {
+            // Hapus produk
+            $id = $conn->real_escape_string($_POST['product_id']);
+            
+            $sql = "DELETE FROM products WHERE id='$id'";
+            if ($conn->query($sql)) {
+                echo "<div class='notification success' style='background: rgba(78,205,196,0.3); padding: 10px; border-radius: 5px; margin: 10px 0;'>Produk berhasil dihapus!</div>";
+            } else {
+                echo "<div class='notification error' style='background: rgba(255,107,107,0.3); padding: 10px; border-radius: 5px; margin: 10px 0;'>Error: " . $conn->error . "</div>";
+            }
+        }
+    }
+    ?>
+    
+    <!-- Form Tambah Produk -->
+    <div class="card" style="margin: 20px 0;">
+        <h3>➕ Tambah Produk Baru</h3>
+        <form method="POST" style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 10px; align-items: end;">
+            <div>
+                <label>Nama Game:</label>
+                <input type="text" name="game_name" required style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white;">
+            </div>
+            <div>
+                <label>Nama Item:</label>
+                <input type="text" name="item_name" required style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white;">
+            </div>
+            <div>
+                <label>Harga (Rp):</label>
+                <input type="number" name="price" required style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white;">
+            </div>
+            <div>
+                <button type="submit" name="add_product" class="btn btn-primary" style="padding: 8px 15px;">Tambah</button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Daftar Produk -->
+    <div class="card">
+        <h3>📋 Daftar Produk</h3>
+        <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+            <thead>
+                <tr style="background: rgba(255,255,255,0.1);">
+                    <th style="padding: 10px; text-align: left;">ID</th>
+                    <th style="padding: 10px; text-align: left;">Game</th>
+                    <th style="padding: 10px; text-align: left;">Item</th>
+                    <th style="padding: 10px; text-align: left;">Harga</th>
+                    <th style="padding: 10px; text-align: center;">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php
+                $result = $conn->query("SELECT * FROM products ORDER BY game_name, price");
+                if ($result->num_rows > 0) {
+                    while ($row = $result->fetch_assoc()) {
+                        echo "<tr style='border-bottom: 1px solid rgba(255,255,255,0.1);'>";
+                        echo "<td style='padding: 10px;'>{$row['id']}</td>";
+                        echo "<td style='padding: 10px;'>{$row['game_name']}</td>";
+                        echo "<td style='padding: 10px;'>{$row['item_name']}</td>";
+                        echo "<td style='padding: 10px;'>Rp " . number_format($row['price'], 0, ',', '.') . "</td>";
+                        echo "<td style='padding: 10px; text-align: center;'>
+                                <form method='POST' style='display: inline;' onsubmit='return confirm(\"Hapus produk ini?\")'>
+                                    <input type='hidden' name='product_id' value='{$row['id']}'>
+                                    <button type='submit' name='delete_product' class='btn-logout' style='padding: 5px 10px; font-size: 0.8rem;'>Hapus</button>
+                                </form>
+                              </td>";
+                        echo "</tr>";
+                    }
+                } else {
+                    echo "<tr><td colspan='5' style='padding: 10px; text-align: center;'>Tidak ada data produk</td></tr>";
+                }
+                ?>
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Form Update Produk -->
+    <div class="card">
+        <h3>✏️ Update Produk</h3>
+        <form method="POST" style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr auto; gap: 10px; align-items: end;">
+            <div>
+                <label>ID Produk:</label>
+                <input type="number" name="product_id" required style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white;">
+            </div>
+            <div>
+                <label>Nama Game:</label>
+                <input type="text" name="game_name" required style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white;">
+            </div>
+            <div>
+                <label>Nama Item:</label>
+                <input type="text" name="item_name" required style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white;">
+            </div>
+            <div>
+                <label>Harga (Rp):</label>
+                <input type="number" name="price" required style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white;">
+            </div>
+            <div>
+                <button type="submit" name="update_product" class="btn btn-primary" style="padding: 8px 15px;">Update</button>
+            </div>
+        </form>
+    </div>
+</section>
+
+<?php $conn->close(); ?>
+
     <footer id="referensi">
         <section>
             <h3>Referensi</h3>
